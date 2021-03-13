@@ -1,0 +1,63 @@
+/* purple: */
+/* color: rgba(54, 25, 55, 1); */
+
+/* NAVBAR Styles */
+.navbar {
+    background-color: rgba(54, 25, 55, 1);
+}
+
+.navbar img {
+    height: 70px;
+}
+
+a {
+    color: #fff;
+}
+
+a:hover{
+    color: rgb(129, 129, 129);
+}
+
+body {
+    background-color: rgb(228, 226, 226);
+}
+
+input {
+    margin: 10px 0;
+    height: 5rem;
+}
+
+.red {
+    color: red;
+}
+
+.button-layout{
+    display: flex;
+    justify-content: space-between;
+}
+
+.button-admin-layout{
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+}
+
+
+.btn-admin {
+    position: absolute;
+    bottom: 100px;
+    right: 100px;
+}
+
+
+@media only screen and (max-width: 720px) {
+    table {
+      font-size: 70%;
+    }
+
+    .btn-admin {
+        position: absolute;
+        bottom: 20px;
+        right: 10px;
+    }
+  }
