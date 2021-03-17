@@ -18,10 +18,10 @@ include_once("../functions/stock-functions.php");
         <?php
         // check to see if a file exists:
         if (file_exists('../data/stock-export.csv')) {
-            echo "<a class='btn btn-primary p-3 mb-3' href='../data/stock-export.csv'>Download data</a>";
+            echo "<a class='btn btn-primary p-3 mb-3' href='../pages/file-download.php'>Download data</a>";
 
         } else {
-            echo "<a class='btn btn-primary p-3 mb-3 disabled' href='../data/stock-export.csv'>Download data</a>";
+            echo "<a class='btn btn-primary p-3 mb-3 disabled' href='../pages/file-download.php'>Download data</a>";
         }
         ?>
         <a class='btn btn-primary p-3 mb-3' href='../pages/stock-reset.php'>Reset All</a>
