@@ -8,7 +8,8 @@ function scanLocation($conn)
 
         // Obtain text from form:
         $location = $_POST['inputLocation'];
-        $location = trim($location);
+        $location = parseInput($location);
+
 
         // ensure there is a value that has been scanned:
         if (strlen($location) < 4) {
@@ -53,7 +54,7 @@ if (isset($_GET)) {
     if (isset($_GET['action']) && isset($_GET['location'])) {
 
         $delLocation = $_GET['location'];
-        $delLocation = trim($delLocation);
+        $delLocation = parseInput($delLocation);
 
         // store the location scanned into a Session variable:
         $_SESSION['location'] = $delLocation;
@@ -70,10 +71,11 @@ if (isset($_GET)) {
     if (isset($_GET['action']) && isset($_GET['barcode'])) {
 
         $delBarcode = $_GET['barcode'];
-        $delBarcode = trim($delBarcode);
+        $delBarcode = parseInput($delBarcode);
 
         // obtain location from session
         $location = $_SESSION['location'];
+        $location = parseInput($location);
 
         // remove Barcode from database
         $delete_query = $conn->prepare("DELETE FROM inventory WHERE location = :location AND barcode = :barcode");
@@ -96,6 +98,7 @@ function showProductInLocation($conn)
 
     // obtain location from Session variable:
     $location = $_SESSION['location'];
+    $location = parseInput($location);
 
     // query database, obtainin all rows for given location:
     $query = $conn->prepare("SELECT * FROM inventory WHERE location = :location");
@@ -116,8 +119,9 @@ function showProductInLocation($conn)
                         <th scope='col'>Location</th>
                         <th scope='col'>Barcode</th>
                         <th scope='col'>ST Code</th>
+                        <th scope='col'>Qty</th>
                         <th scope='col'>Person</th>
-                        <th scope='col'>Date/Time</th>
+                        <th scope='col' class='content-to-hide'>Date/Time</th>
                         <th scope='col'>Actions</th>
                     <tr>
                 </thead>
@@ -133,13 +137,14 @@ function showProductInLocation($conn)
             $location   = $results['location'];
             $barcode    = $results['barcode'];
             $sku        = $results['sku'];
+            $qty        = $results['qty'];
             $user       = $results['user'];
             $updated    = $results['updated'];
 
             $updated = substr($updated, 0, 10);
 
             // button to remove row if required:
-            $button = "<a class='btn btn-danger btn-sm' href='../pages/stock-take-location.php?action=delete&barcode=$barcode' data-toggle='tooltip' title='Remove item from location'>Remove</a>";
+            $button = "<a class='btn btn-danger btn-sm btn-smaller' href='../pages/stock-take-location.php?action=delete&barcode=$barcode' data-toggle='tooltip' title='Remove item from location'>Remove</a>";
 
 
             $table_row = ("
@@ -147,8 +152,9 @@ function showProductInLocation($conn)
                             <td>{$location}</td>
                             <td>{$barcode}</td>
                             <td>{$sku}</td>
+                            <td>{$qty}</td>
                             <td>{$user}</td>
-                            <td>{$updated}</td>
+                            <td class='content-to-hide'>{$updated}</td>
                             <td>$button</td>
         
                         </tr>
@@ -172,7 +178,7 @@ function showProductInLocationQuery($conn)
     if (isset($_POST['submit'])) {
 
         $location = $_POST['inputLocation'];
-        $location = trim($location);
+        $location = parseInput($location);
 
         // query database, obtainin all rows for given location:
         $query = $conn->prepare("SELECT * FROM inventory WHERE location = :location");
@@ -193,6 +199,7 @@ function showProductInLocationQuery($conn)
                         <th scope='col'>Location</th>
                         <th scope='col'>Barcode</th>
                         <th scope='col'>ST Code</th>
+                        <th scope='col'>Qty</th>
                         <th scope='col'>Person</th>
                         <th scope='col'>Date/Time</th>
                         <th scope='col'>Actions</th>
@@ -210,13 +217,14 @@ function showProductInLocationQuery($conn)
                 $location   = $results['location'];
                 $barcode    = $results['barcode'];
                 $sku        = $results['sku'];
+                $qty        = $results['qty'];
                 $user       = $results['user'];
                 $updated    = $results['updated'];
 
                 $updated = substr($updated, 0, 10);
 
                 // button to remove row if required:
-                $button = "<a class='btn btn-danger btn-sm' href='../pages/stock-take-location.php?action=delete&barcode=$barcode' data-toggle='tooltip' title='Remove item from location'>Remove</a>";
+                $button = "<a class='btn btn-danger btn-sm btn-smaller' href='../pages/stock-take-location.php?action=delete&barcode=$barcode' data-toggle='tooltip' title='Remove item from location'>Remove</a>";
 
 
                 $table_row = ("
@@ -224,6 +232,7 @@ function showProductInLocationQuery($conn)
                             <td>{$location}</td>
                             <td>{$barcode}</td>
                             <td>{$sku}</td>
+                            <td>{$qty}</td>
                             <td>{$user}</td>
                             <td>{$updated}</td>
                             <td>$button</td>
@@ -256,10 +265,20 @@ function scanItem($conn)
 
         // obtain values
         $barcode = $_POST['inputItem'];
-        $barcode = trim($barcode);
+        $barcode = parseInput($barcode);
+
+        $qty = $_POST['inputQty'];
+        $qty = parseInput($qty);
+
+        // Set Qty to 1 and negatives are not cool.
+        if ($qty < 1){
+            $qty =1;
+        }
 
         $name = $_SESSION['name'];
+        $name = htmlspecialchars($name);
         $location = $_SESSION['location'];
+        $location = htmlspecialchars($location);
 
         // ccheck for valid length
         if (strlen($barcode) < 4) {
@@ -270,9 +289,10 @@ function scanItem($conn)
 
         // Store Item in Database:
         $insert_query = $conn->prepare("INSERT INTO inventory (location, barcode, qty, user, created, updated)
-                                        VALUES (:location, :barcode, 1, :user, now(), now() ) ");
+                                        VALUES (:location, :barcode, :qty, :user, now(), now() ) ");
         $insert_query->bindParam(':location', $location, PDO::PARAM_STR);
         $insert_query->bindParam(':barcode', $barcode, PDO::PARAM_STR);
+        $insert_query->bindParam(':qty', $qty, PDO::PARAM_INT);
         $insert_query->bindParam(':user', $name, PDO::PARAM_STR);
         $insert_query->execute();
 
@@ -304,4 +324,16 @@ function selectInventory($conn)
     }
 
     return $query;
+}
+
+// Function to cleanse string, keep things safe.
+function parseInput($string) {
+
+    // remove any whitespace before / after:
+    $cleanString = trim($string);
+
+    // remove any command type characters, prevent SQL injection and XSS
+    $cleanString = htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+
+    return $cleanString;
 }
